@@ -2,12 +2,41 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
-
-public static void main(String[] args){
-
-
-
-
+class SingleThreadedChatServer{
+  
+  public static void main(String[] args){
+    
+    if(args.length != 1){
+      System.err.println("arguments failed\n");
+      System.exit(1);
+    }
+    int portNumber = Integer.parseInt(args[0]);
+    try{
+      //set up the server and client sockets
+      ServerSocket serverSocket = new ServerSocket(portNumber);
+      
+      
+      while(System.in.available() == 0){
+        //Server waits for two clients to connect to it
+        System.out.println("waiting for clients\n");
+        Socket clientSocketA = serverSocket.accept();
+        System.out.println("connected to client A\n");
+        Socket clientSocketB = serverSocket.accept();
+        System.out.println("connected to client B\n");
+        //Set up a game server on a new thread
+        ChatClient chatclient = new ChatClient(clientSocketA, clientSocketB);
+        Thread chatthread = new Thread(chatclient);
+        System.out.println("starting GameServer in new thread\n");
+        chatthread.start();
+      }
+      serverSocket.close();
+    }
+    catch (IOException e) {
+            System.err.println("socket failure:\n" + e.getMessage() + "\n");
+            System.exit(1);
+    }
+    return;
+  }
 }
 /*
 while ( true ) {
