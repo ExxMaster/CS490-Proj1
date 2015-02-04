@@ -2,41 +2,35 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+
 class SingleThreadedChatServer{
   
-  public static void main(String[] args){
-    
-    if(args.length != 1){
-      System.err.println("arguments failed\n");
-      System.exit(1);
+ public static void main(String[] args) throws IOException {
+  
+  int portNumber = 5555;
+  
+  //set up the server sockets
+  ServerSocket serverSocket = new ServerSocket(portNumber);
+  
+  try {
+   while( true ){
+      //accept connection from client c
+    Socket client = serverSocket.accept();
+
+    try {
+     //receive message m from client c
+      BufferedReader input =
+        new BufferedReader(new InputStreamReader(client.getInputStream()));
+        String answer = input.readLine();
+        System.out.printf("%s\n", answer);
+    } finally {
+     client.close();
     }
-    int portNumber = Integer.parseInt(args[0]);
-    try{
-      //set up the server and client sockets
-      ServerSocket serverSocket = new ServerSocket(portNumber);
-      
-      
-      while(System.in.available() == 0){
-        //Server waits for two clients to connect to it
-        System.out.println("waiting for clients\n");
-        Socket clientSocketA = serverSocket.accept();
-        System.out.println("connected to client A\n");
-        Socket clientSocketB = serverSocket.accept();
-        System.out.println("connected to client B\n");
-        //Set up a game server on a new thread
-        ChatClient chatclient = new ChatClient(clientSocketA, clientSocketB);
-        Thread chatthread = new Thread(chatclient);
-        System.out.println("starting GameServer in new thread\n");
-        chatthread.start();
-      }
-      serverSocket.close();
-    }
-    catch (IOException e) {
-            System.err.println("socket failure:\n" + e.getMessage() + "\n");
-            System.exit(1);
-    }
-    return;
+   }
+  } finally {
+   serverSocket.close();
   }
+ }
 }
 /*
 while ( true ) {
