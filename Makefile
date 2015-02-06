@@ -1,8 +1,9 @@
-all:
-	javac MatchingServer.java
+all: compile
+
+compile:
 	javac ChatClient.java
-	javac SingleThreadedChatrServer.java
+	javac SingleThreadedChatServer.java
 
 clean:
-	rm *.o *.class
+	rm *.class
 	clear
