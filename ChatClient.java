@@ -11,7 +11,8 @@ class ChatClient {
     //constant variable
     private static final int heartbeat_rate = 5;
     private static final String serverAddress = "localhost";
-    private static final int portNumber = 1234;
+    private static int portNumber = 0;
+
     
     private ChatClient() {
         //get the name
@@ -23,7 +24,7 @@ class ChatClient {
         try{
             s = new Socket(serverAddress, portNumber);
         }catch (IOException e) {
-            System.out.println("Cannection to server failed");
+            System.out.println("Connection to server failed");
             System.exit(1);
         }
         
@@ -78,6 +79,7 @@ class ChatClient {
     }
     
     public static void main(String[] args) throws Exception {
+        portNumber = Integer.parseInt(args[0]);
         ChatClient cc = new ChatClient();
         cc.register();
         cc.sendHeartbeat();
