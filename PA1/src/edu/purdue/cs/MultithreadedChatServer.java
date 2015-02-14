@@ -5,11 +5,12 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -20,7 +21,7 @@ public class MultithreadedChatServer implements Runnable {
 	private static final int THREAD_POOL_CAPACITY = 10;
 	
 	private ServerSocket serverSocket;
-	public static LinkedList<String> group;
+	public static ArrayList<String> group;
 	private ThreadPoolExecutor executor;
 	
 	private Socket _client;
@@ -38,8 +39,7 @@ public class MultithreadedChatServer implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		group = new LinkedList<String>();
+		group = new ArrayList<String>();
 	}
 	
 	public MultithreadedChatServer(Socket client) {
@@ -71,12 +71,9 @@ public class MultithreadedChatServer implements Runnable {
 		System.out.println(sa[0]);
 		for(int i = 0; i < MultithreadedChatServer.group.size(); i++) {
 			if(MultithreadedChatServer.group.get(i).contains(sa[0])) {
-				try {
-		            
+				try {	            
 		            bw.write("Failed\n");
-		            
 		            bw.flush();
-
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -87,11 +84,7 @@ public class MultithreadedChatServer implements Runnable {
 		
 		try {            
             bw.write("Success\n");
-            if(_client.isConnected()) {
-            	System.out.println("still alive");
-            }
             bw.flush();
-            System.out.println("Message sent");
 		} catch (IOException e) {
 			System.out.println("error: sending success");
 			e.printStackTrace();
@@ -127,10 +120,15 @@ public class MultithreadedChatServer implements Runnable {
 					} else {
 						System.out.println("failed");
 					}
+				} else if(m.equals("get")) {
+					ObjectOutputStream oos = new ObjectOutputStream(this._client.getOutputStream());
+					oos.writeObject(MultithreadedChatServer.group);
+					oos.flush();
 				}
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			System.out.println("Connection to the client lost");
+			System.exit(1);
 		}
 	}
 }
