@@ -4,10 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.Calendar;
 import java.util.Enumeration;
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 class SingleThreadedChatServer implements Runnable {
 	
@@ -16,7 +13,6 @@ class SingleThreadedChatServer implements Runnable {
 	private static ConcurrentHashMap<String, Socket> _clients;
 	public static ConcurrentHashMap<String, Long> group;
 	private static Calendar calendar;
-	private ThreadPoolExecutor executor;
 	private static ServerSocket serverSocket;
 	
 	public SingleThreadedChatServer() {
@@ -24,7 +20,6 @@ class SingleThreadedChatServer implements Runnable {
 		group = new ConcurrentHashMap<String, Long>();
 		calendar = Calendar.getInstance();
 		
-		executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(5);
 		try {
 			serverSocket = new ServerSocket(portNumber);
 		} catch (IOException e) {
@@ -32,7 +27,8 @@ class SingleThreadedChatServer implements Runnable {
 		}
 	}
     
-    public static void main(String[] args) {
+    @SuppressWarnings("unused")
+	public static void main(String[] args) {
         
     	SingleThreadedChatServer ss = new SingleThreadedChatServer();
     	
@@ -40,7 +36,7 @@ class SingleThreadedChatServer implements Runnable {
     	
         try {
             while(true) {
-                Socket _client = ss.serverSocket.accept();
+                Socket _client = SingleThreadedChatServer.serverSocket.accept();
                 InputStream is = _client.getInputStream();
                 InputStreamReader isr = new InputStreamReader(is);
                 BufferedReader br = new BufferedReader(isr);

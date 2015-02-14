@@ -10,7 +10,11 @@ class ChatClient implements Runnable{
     
     private String _name, _ip;
     private int _port;
+    
+    //Connection to server
     private Socket s;
+    
+    //ThreadPool
     private ThreadPoolExecutor executor;
     
     //IO buffer
@@ -41,22 +45,23 @@ class ChatClient implements Runnable{
     }
     
     //register client
-    private boolean register() {
+    @SuppressWarnings("resource")
+ private boolean register() {
         //get the name
-		Scanner sc = new Scanner(System.in);
-		System.out.print("Please Enter Your Name: ");
-		this._name = sc.nextLine();
-		
-		String m = "register<" + this._name + ", " + this._ip + ", " +  this._port + ">" + "\n";
-		//System.out.println(m);
-		
-		this.sendMessage(m);
-		//System.out.println("Message sent to the server : " + m);
-
-		m = this.readMessage();
-		//System.out.println(m);
-		
-		return(m.equals("Success"));
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Please Enter Your Name: ");
+        this._name = sc.nextLine();
+        
+        String m = "register<" + this._name + ", " + this._ip + ", " +  this._port + ">" + "\n";
+        //System.out.println(m);
+        
+        this.sendMessage(m);
+        //System.out.println("Message sent to the server : " + m);
+        
+        m = this.readMessage();
+        //System.out.println(m);
+        
+        return(m.equals("Success"));
     }
     
     //send heart beat every heartbeat_rate seconds
@@ -66,29 +71,29 @@ class ChatClient implements Runnable{
     
     //write String s to the Socket
     private boolean sendMessage(String s) {
-    	try {
-			this.bw.write(s);
-			this.bw.flush();
-		} catch (IOException e) {
-			return false;
-		}
-    	return true;
+        try {
+            this.bw.write(s);
+            this.bw.flush();
+        } catch (IOException e) {
+            return false;
+        }
+        return true;
     }
     
     //read message from the socket
     private String readMessage() {
-    	String s;
-    	try {
-			s = this.br.readLine();
-		} catch (IOException e) {
-			return null;
-		}
-    	return s;
+        String s;
+        try {
+            s = this.br.readLine();
+        } catch (IOException e) {
+            return null;
+        }
+        return s;
     }
-
-	@Override
-	public void run() {
-		try {
+    
+    @Override
+    public void run() {
+        try {
             while(true) {
                 String m = "heartbeat<" + this._name + ", " + this._ip + ", " +  this._port + ">" + "\n";
                 this.sendMessage(m);
@@ -98,56 +103,44 @@ class ChatClient implements Runnable{
         } catch (Exception e) {
             e.printStackTrace();
         }
-	}
-	
-	private void prompt() {
-		Scanner sc = new Scanner(System.in);
-		while(true) {
-			try {
-				System.out.print("> ");
-				String command = sc.nextLine();
-				if(command.equals("exit")) {
-					sc.close();
-					System.exit(1);
-				} else if(command.equals("get")) {
-					this.get();
-				} else if(command.contains("chat")) {
-					this.chat(command);
-				} else {
-					System.out.println("Command not found");
-				}
-			} catch(Exception e) {
-				System.out.println("exit");
-				System.exit(1);
-				
-			}
-		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	private ArrayList<String> get() {
-		try {
-			String m = "get\n";
-			this.sendMessage(m);
-			ObjectInputStream ois = new ObjectInputStream(this.s.getInputStream());
-			ArrayList<String> a = (ArrayList<String>) ois.readObject();
-			System.out.println(a.toString());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
-	private void chat(String s) {
-		this.executor.execute(new Runnable() {
-
-			@Override
-			public void run() {
-				
-			}
-			
-		});
-	}
+    }
+    
+    private void prompt() {
+        Scanner sc = new Scanner(System.in);
+        while(true) {
+            try {
+                System.out.print("> ");
+                String command = sc.nextLine();
+                if(command.equals("exit")) {
+                    sc.close();
+                    System.exit(1);
+                } else if(command.equals("get")) {
+                    this.get();
+                } else if(command.contains("chat")) {
+                } else {
+                    System.out.println("Command not found");
+                }
+            } catch(Exception e) {
+                System.out.println("exit");
+                System.exit(1);
+                
+            }
+        }
+    }
+    
+    @SuppressWarnings("unchecked")
+    private ArrayList<String> get() {
+        try {
+            String m = "get\n";
+            this.sendMessage(m);
+            ObjectInputStream ois = new ObjectInputStream(this.s.getInputStream());
+            ArrayList<String> a = (ArrayList<String>) ois.readObject();
+            System.out.println(a.toString());
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
     
     public static void main(String[] args) throws Exception {
         ChatClient cc = new ChatClient();
