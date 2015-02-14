@@ -9,9 +9,6 @@ import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -55,19 +52,6 @@ public class MultithreadedChatServer implements Runnable {
         }
     }
     
-    public void startServer() {
-    	this.checkingHeartbeat();
-        while (true) {
-            try {
-                Socket _client = this.serverSocket.accept();
-                MultithreadedChatServer ms = new MultithreadedChatServer(_client);
-                this.executor.execute(ms);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-    
     private synchronized boolean addToGroup(String s) {
         String [] sa = s.split(",");
         sa[0] = sa[0].substring(1);
@@ -100,6 +84,7 @@ public class MultithreadedChatServer implements Runnable {
         return MultithreadedChatServer.group.remove(s);
     }
     
+    
     public void checkingHeartbeat() {
     	this.executor.execute(new Runnable() {
 
@@ -113,26 +98,19 @@ public class MultithreadedChatServer implements Runnable {
 						e.printStackTrace();
 					}
 					Long time = System.currentTimeMillis();
-					Set<Entry<String, Long>> s = MultithreadedChatServer.heart_beat.entrySet();
-					Iterator<Entry<String, Long>> i = s.iterator();
-					if(i.hasNext()) {
-						Entry<String, Long> entry = i.next();
-						if(time - entry.getValue() > 10000) {
-							MultithreadedChatServer.heart_beat.remove(entry.getKey());
-							System.out.printf("client %s removed\n", entry.getKey());
-							MultithreadedChatServer.removeFromGroup(entry.getKey());
+					for(int i = 0; i < group.size(); i++) {
+						String id = group.get(i);
+						Long t = heart_beat.get(id);
+						if(time - t > 10000) {
+							heart_beat.remove(id);
+							removeFromGroup(id);
+							System.out.printf("%s removed\n time stap:\t%s\n time now:\t%s\n", id, t.toString(), time.toString());
 						}
 					}
 				}
 			}
     		
     	});
-    }
-    
-    public static void main(String[] args) {
-        System.out.println("Start!");
-        MultithreadedChatServer ms = new MultithreadedChatServer();
-        ms.startServer();
     }
     
     @Override
@@ -155,12 +133,35 @@ public class MultithreadedChatServer implements Runnable {
                     oos.writeObject(MultithreadedChatServer.group);
                     oos.flush();
                 } else if(m.contains("heartbeat")) {
-                    MultithreadedChatServer.heart_beat.put(m, System.currentTimeMillis());
+                	Long l = System.currentTimeMillis();
+                    if(MultithreadedChatServer.heart_beat.put(m, l) == null) {
+                    	System.out.println("updating failed");
+                    }
+                    System.out.printf("update time to %s\n", l.toString());
                 }
             }
         } catch (Exception e) {
             System.out.printf("Connection to %s lost\n", this.name);
             Thread.yield();
         }
+    }
+    
+    public void startServer() {
+    	this.checkingHeartbeat();
+        while (true) {
+            try {
+                Socket _client = this.serverSocket.accept();
+                MultithreadedChatServer ms = new MultithreadedChatServer(_client);
+                this.executor.execute(ms);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    public static void main(String[] args) {
+        System.out.println("Start!");
+        MultithreadedChatServer ms = new MultithreadedChatServer();
+        ms.startServer();
     }
 }
