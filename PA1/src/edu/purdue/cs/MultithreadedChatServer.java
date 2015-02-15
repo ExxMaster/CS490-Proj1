@@ -134,6 +134,7 @@ public class MultithreadedChatServer implements Runnable {
                     oos.flush();
                 } else if(m.contains("heartbeat")) {
                 	Long l = System.currentTimeMillis();
+                	m = m.substring(m.indexOf('<'));
                     if(MultithreadedChatServer.heart_beat.put(m, l) == null) {
                     	System.out.println("updating failed");
                     }
