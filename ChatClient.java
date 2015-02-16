@@ -79,7 +79,11 @@ class ChatClient {
     }
     
     public static void main(String[] args) throws Exception {
-        portNumber = Integer.parseInt(args[0]);
+        if(args.length<1){
+		Sytem.out.println("Must enter port number");
+		return;
+	}
+	portNumber = Integer.parseInt(args[0]);
         ChatClient cc = new ChatClient();
         cc.register();
         cc.sendHeartbeat();

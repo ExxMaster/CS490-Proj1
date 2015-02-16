@@ -4,6 +4,10 @@ compile:
 	javac ChatClient.java
 	javac SingleThreadedChatServer.java
 
+
+multi:
+	javac MultithreadedChatServer.java
+	javac MChatClient.java
 clean:
-	rm *.class
+	rm *.class *.java~
 	clear

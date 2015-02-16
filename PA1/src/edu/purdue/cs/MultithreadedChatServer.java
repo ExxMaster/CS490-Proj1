@@ -1,4 +1,4 @@
-package edu.purdue.cs;
+//package edu.purdue.cs;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -8,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.*;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -130,6 +131,10 @@ public class MultithreadedChatServer implements Runnable {
                     MultithreadedChatServer.heart_beat.put(m, System.currentTimeMillis());
                 } else if(m.equals("get")) {
                     ObjectOutputStream oos = new ObjectOutputStream(this._client.getOutputStream());
+                    oos.writeObject(MultithreadedChatServer.group);
+                    oos.flush();
+                }  else if (m.equals("chat")) {
+                  	ObjectOutputStream oos = new ObjectOutputStream(this._client.getOutputStream());
                     oos.writeObject(MultithreadedChatServer.group);
                     oos.flush();
                 } else if(m.contains("heartbeat")) {
