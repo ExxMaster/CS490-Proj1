@@ -8,7 +8,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -133,17 +132,15 @@ public class MultithreadedChatServer implements Runnable {
                     ObjectOutputStream oos = new ObjectOutputStream(this._client.getOutputStream());
                     oos.writeObject(MultithreadedChatServer.group);
                     oos.flush();
-                }  else if (m.equals("chat")) {
-                  	ObjectOutputStream oos = new ObjectOutputStream(this._client.getOutputStream());
-                    oos.writeObject(MultithreadedChatServer.group);
-                    oos.flush();
                 } else if(m.contains("heartbeat")) {
                 	Long l = System.currentTimeMillis();
                 	m = m.substring(m.indexOf('<'));
                     if(MultithreadedChatServer.heart_beat.put(m, l) == null) {
                     	System.out.println("updating failed");
+                    } else {
+                    	System.out.printf("update time to %s\n", l.toString());
+                    	System.out.println(MultithreadedChatServer.heart_beat.get(m).toString());
                     }
-                    System.out.printf("update time to %s\n", l.toString());
                 }
             }
         } catch (Exception e) {
