@@ -1,5 +1,3 @@
-//package edu.purdue.cs;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -137,10 +135,8 @@ public class MultithreadedChatServer implements Runnable {
                 	m = m.substring(m.indexOf('<'));
                     if(MultithreadedChatServer.heart_beat.put(m, l) == null) {
                     	System.out.println("updating failed");
-                    } else {
-                    	System.out.printf("update time to %s\n", l.toString());
-                    	System.out.println(MultithreadedChatServer.heart_beat.get(m).toString());
                     }
+                    System.out.printf("update time to %s\n", l.toString());
                 }
             }
         } catch (Exception e) {

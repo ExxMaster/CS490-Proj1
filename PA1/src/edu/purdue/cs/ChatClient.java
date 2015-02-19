@@ -1,51 +1,61 @@
-//package edu.purdue.cs;
-
 import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
+ 
 class ChatClient implements Runnable{
-    
+     
     private String _name, _ip;
     private int _port;
+    ArrayList<String> group = null;
     
     //Connection to server
     private Socket s;
-    
+     
+    //Socket for incoming chat
+    private ServerSocket serverSocket;
+    private Socket _client;
+     
     //ThreadPool
     private ThreadPoolExecutor executor;
-    
+     
     //IO buffer
     BufferedWriter bw;
     BufferedReader br;
-    
+     
     //constant variable
     private static final int heartbeat_rate = 5;
     private static final String serverAddress = "localhost";
     private static final int portNumber = 1222;
     private static final int THREAD_POOL_CAPACITY = 10;
-    
+     
     private ChatClient() {
-        
+         
         try{
             s = new Socket(serverAddress, portNumber);
             bw = new BufferedWriter(new OutputStreamWriter(s.getOutputStream()));
             br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+            serverSocket = new ServerSocket(0);
         }catch (IOException e) {
             System.out.println("Cannection to server failed");
             System.exit(1);
         }
-        
-        
+         
         this.executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(THREAD_POOL_CAPACITY);
         this._ip = s.getLocalAddress().toString().substring(1);
-        this._port = s.getLocalPort();
+        this._port = serverSocket.getLocalPort();
         
+        //listen for chat
+        this.listen();
     }
+     
     
+    
+ private void listen() {
+ 	this.executor.execute(this);
+ }
+ 
     //register client
     @SuppressWarnings("resource")
  private boolean register() {
@@ -53,24 +63,47 @@ class ChatClient implements Runnable{
         Scanner sc = new Scanner(System.in);
         System.out.print("Please Enter Your Name: ");
         this._name = sc.nextLine();
-        
+         
         String m = "register<" + this._name + ", " + this._ip + ", " +  this._port + ">" + "\n";
         //System.out.println(m);
-        
+         
         this.sendMessage(m);
         //System.out.println("Message sent to the server : " + m);
-        
+         
         m = this.readMessage();
         //System.out.println(m);
-        
+         
         return(m.equals("Success"));
     }
-    
+     
     //send heart beat every heartbeat_rate seconds
     private void sendHeartbeat() {
-        this.executor.execute(this);
+        this.executor.execute(new Runnable() {
+
+        	ChatClient c;
+        	
+			@Override
+			public void run() {
+				try {
+		            while(true) {
+		                String m = "heartbeat<" + c._name + ", " + c._ip + ", " +  c._port + ">" + "\n";
+		                c.sendMessage(m); 
+		                //System.out.println("Message sent to the server : " + m);
+		                Thread.sleep(heartbeat_rate * 1000);
+		            }
+		        } catch (Exception e) {
+		            e.printStackTrace();
+		        }
+			}
+			
+			public Runnable init(ChatClient cc) {
+				this.c = cc;
+				return this;
+			}
+        	
+        }.init(this));
     }
-    
+     
     //write String s to the Socket
     private boolean sendMessage(String s) {
         try {
@@ -81,7 +114,7 @@ class ChatClient implements Runnable{
         }
         return true;
     }
-    
+     
     //read message from the socket
     private String readMessage() {
         String s;
@@ -92,21 +125,19 @@ class ChatClient implements Runnable{
         }
         return s;
     }
-    
+     
     @Override
     public void run() {
         try {
-            while(true) {
-                String m = "heartbeat<" + this._name + ", " + this._ip + ", " +  this._port + ">" + "\n";
-                this.sendMessage(m);
-                //System.out.println("Message sent to the server : " + m);
-                Thread.sleep(heartbeat_rate * 1000);
-            }
-        } catch (Exception e) {
+            this._client = this.serverSocket.accept();
+            System.out.print("Incoming chat.\nDo you want to answer?[yn]\n> ");
+            return;
+        } catch(Exception e) {
             e.printStackTrace();
         }
+        return;
     }
-    
+     
     private void prompt() {
         Scanner sc = new Scanner(System.in);
         while(true) {
@@ -117,117 +148,159 @@ class ChatClient implements Runnable{
                     sc.close();
                     System.exit(1);
                 } else if(command.equals("get")) {
-                    this.get();
+                    this.group = this.get();
                 } else if(command.contains("chat")) {
-                	this.chat(command);
+                    this.Chat(command);
+                } else if(command.equals("y")) {
+                    this.AcceptChat();
+                    this.listen();
+                } else if(command.equals("n")) {
+                    bw = new BufferedWriter(new OutputStreamWriter(this._client.getOutputStream()));
+                    bw.write("Declined\n");
+                    bw.flush();
                 } else {
                     System.out.println("Command not found");
                 }
             } catch(Exception e) {
-                System.out.println("exit");
+                e.printStackTrace();
                 System.exit(1);
-                
+                 
             }
         }
     }
     
+    
+    
+    //chat from here
+    @SuppressWarnings("resource")
+	private void Chat(String s) throws IOException {
+    	String [] tok = s.split(" ");
+    	Socket socket = new Socket(tok[1], Integer.parseInt(tok[2]));
+    	BufferedWriter bbw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+    	
+    	//new thread to keep receiving message
+    	this.executor.execute(new Runnable() {
+
+    		Socket s;
+    		
+			@Override
+			public void run() {
+				try {
+					BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+					while(true) {
+						String s = br.readLine();
+						if(s == null) {
+							continue;
+						}
+						if(s.equals("EndSession")) {
+							System.out.println("Chat Closed");
+							System.out.print(">> ");
+							return;
+						}
+						System.out.println(s);
+						System.out.print(">> ");
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			private Runnable init(Socket socket) {
+				this.s = socket;
+				return this;
+			}
+    		
+    	}.init(socket));
+    	
+    	Scanner sc = new Scanner(System.in);
+        while(true) {
+        	System.out.print(">> ");
+        	String st = sc.nextLine();
+        	if(st.equals("exit")) {
+        		bbw.write("EndSession\n");
+        		bbw.flush();
+        		return;
+        	}
+        	st = st + "\n";
+        	bbw.write(st);
+        	bbw.flush();
+        }
+    }
+    
+    //start chat session
+    @SuppressWarnings("resource")
+	private void AcceptChat() throws IOException {
+    	BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(_client.getOutputStream()));
+    	BufferedReader br = new BufferedReader(new InputStreamReader(_client.getInputStream()));
+        
+        //printing incoming message
+        this.executor.execute(new Runnable() {
+
+        	BufferedReader br;
+			@Override
+			public void run() {
+				while(true) {
+					try {
+						String s = br.readLine();
+						if(s == null) {
+							continue;
+						}
+						if(s.equals("EndSession")) {
+							System.out.println("Chat Closed");
+							System.out.print(">> ");
+							return;
+						}
+						System.out.println(s);
+						System.out.print(">> ");
+					} catch(Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			
+			private Runnable init(BufferedReader br) {
+				this.br = br;
+				return this;
+			}
+        	
+        }.init(br));
+        Scanner sc = new Scanner(System.in);
+        while(true) {
+	        System.out.print("> ");
+        	String s = sc.nextLine();
+        	if(s.equals("exit")) {
+        		bw.write("EndSession\n");
+        		bw.flush();
+        		return;
+        	}
+        	s = s + "\n";
+        	bw.write(s);
+        	bw.flush();
+        }
+    }
+     
     @SuppressWarnings("unchecked")
     private ArrayList<String> get() {
+        ArrayList<String> ret = null;
         try {
             String m = "get\n";
             this.sendMessage(m);
             ObjectInputStream ois = new ObjectInputStream(this.s.getInputStream());
-            ArrayList<String> a = (ArrayList<String>) ois.readObject();
-            System.out.println(a.toString());
+            ret = (ArrayList<String>) ois.readObject();
+            System.out.println(ret.toString());
         } catch(Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return ret;
     }
-    
-    @SuppressWarnings("unchecked")
-    private ArrayList<String> chat(String message) {
-    	String name1 = "";
-		String msg1 = "";
-		String user = "";
-		System.out.println("here in chat");
-		
-		/*
-		Socket ch;
-		try{
-            ch = new Socket(serverAddress, portNumber);
-            chbw = new BufferedWriter(new OutputStreamWriter(ch.getOutputStream()));
-           // chbr = new BufferedReader(new InputStreamReader(ch.getInputStream()));
-        }catch (IOException e) {
-            System.out.println("Cannection to server failed");
-            System.exit(1);
-        }*/
-        
-        
-        
-    	try{
-    		//String mydata = "some string with 'the data i want' inside";
-			//Pattern pattern = Pattern.compile("[A-Za-z0-9.,?!$#@\-\=\+\%\* ]+");
-			Pattern pattern = Pattern.compile("'(.*?)'");
-			Matcher matcher = pattern.matcher(message);
-			
-			if (matcher.find())
-			{
-				System.out.println(matcher.group(1));
-				name1 = matcher.group(1);
-			}
-			if (matcher.find())
-			{
-				System.out.println(matcher.group(1));
-				msg1 = matcher.group(1);
-			}
-			
-			this.sendMessage("chat\n");
-    		ObjectInputStream ois = new ObjectInputStream(this.s.getInputStream());
-            ArrayList<String> a = (ArrayList<String>) ois.readObject();
-            //System.out.println(a.toString());
-            //System.out.println("hdhasdgashdghasdgsah" + a.size());
-            for(int i = 0; i < a.size(); i++) {
-				user = a.get(i).toString();
-				System.out.println("user: "+user);
-				if(user.contains(name1) && name1!=null && msg1!=null){
-					//TODO parse user to get ip and port
-					// create socket to bufferwrite to port
-					// bw.write msg1
-					//this.sendMessage(msg1);
-				}			
-			}
-            
-    		
-    	} catch(Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-    
-    private void recieve(){
-    	String user = "";
-    	//while(true){
-			//ObjectInputStream ois = new ObjectInputStream(this.s.getInputStream());
-		  //  ArrayList<String> a = (ArrayList<String>) ois.readObject();
-			//for(int i = 0; i < a.size(); i++) {
-				//user = a.get(i).toString();
-				//TODO parse user to get ip and port
-				// make socket to buffer read from port
-				// String msg = br.readLine();
-				// System.out.println(msg);
-			//}
-		//}
-    }
-    
+     
     public static void main(String[] args) throws Exception {
         ChatClient cc = new ChatClient();
-        
+         
         while(true) {
             if(cc.register()) break;
         }
-       // Thread t = new Thread();
-        //t.recieve();
+         
         cc.sendHeartbeat();
         cc.prompt();
     }
