@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class MultithreadedChatServer implements Runnable {
     
     //Constant Variable
-    private static final int PORT = 1222;
+    private static final int PORT = 1222;  //TODO
     private static final int THREAD_POOL_CAPACITY = 10;
     
     private ServerSocket serverSocket;
@@ -84,31 +84,31 @@ public class MultithreadedChatServer implements Runnable {
     
     
     public void checkingHeartbeat() {
-    	this.executor.execute(new Runnable() {
+     this.executor.execute(new Runnable() {
 
-			@Override
-			public void run() {
-				while(true) {
-					System.out.println("Checking Heartbeat");
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					Long time = System.currentTimeMillis();
-					for(int i = 0; i < group.size(); i++) {
-						String id = group.get(i);
-						Long t = heart_beat.get(id);
-						if(time - t > 10000) {
-							heart_beat.remove(id);
-							removeFromGroup(id);
-							System.out.printf("%s removed\n time stap:\t%s\n time now:\t%s\n", id, t.toString(), time.toString());
-						}
-					}
-				}
-			}
-    		
-    	});
+   @Override
+   public void run() {
+    while(true) {
+     System.out.println("Checking Heartbeat");
+     try {
+      Thread.sleep(1000);
+     } catch (InterruptedException e) {
+      e.printStackTrace();
+     }
+     Long time = System.currentTimeMillis();
+     for(int i = 0; i < group.size(); i++) {
+      String id = group.get(i);
+      Long t = heart_beat.get(id);
+      if(time - t > 10000) {
+       heart_beat.remove(id);
+       removeFromGroup(id);
+       System.out.printf("%s removed\n time stap:\t%s\n time now:\t%s\n", id, t.toString(), time.toString());
+      }
+     }
+    }
+   }
+      
+     });
     }
     
     @Override
@@ -131,10 +131,10 @@ public class MultithreadedChatServer implements Runnable {
                     oos.writeObject(MultithreadedChatServer.group);
                     oos.flush();
                 } else if(m.contains("heartbeat")) {
-                	Long l = System.currentTimeMillis();
-                	m = m.substring(m.indexOf('<'));
+                 Long l = System.currentTimeMillis();
+                 m = m.substring(m.indexOf('<'));
                     if(MultithreadedChatServer.heart_beat.put(m, l) == null) {
-                    	System.out.println("updating failed");
+                     System.out.println("updating failed");
                     }
                     System.out.printf("update time to %s\n", l.toString());
                 }
@@ -146,7 +146,7 @@ public class MultithreadedChatServer implements Runnable {
     }
     
     public void startServer() {
-    	this.checkingHeartbeat();
+     this.checkingHeartbeat();
         while (true) {
             try {
                 Socket _client = this.serverSocket.accept();

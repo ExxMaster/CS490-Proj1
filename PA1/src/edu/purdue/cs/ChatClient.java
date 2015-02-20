@@ -27,7 +27,7 @@ class ChatClient implements Runnable{
     //constant variable
     private static final int heartbeat_rate = 5;
     private static final String serverAddress = "localhost";
-    private static final int portNumber = 1222;
+    private static final int portNumber = 1222; //TODO
     private static final int THREAD_POOL_CAPACITY = 10;
      
     private ChatClient() {
@@ -53,7 +53,7 @@ class ChatClient implements Runnable{
     
     
  private void listen() {
- 	this.executor.execute(this);
+  this.executor.execute(this);
  }
  
     //register client
@@ -80,27 +80,27 @@ class ChatClient implements Runnable{
     private void sendHeartbeat() {
         this.executor.execute(new Runnable() {
 
-        	ChatClient c;
-        	
-			@Override
-			public void run() {
-				try {
-		            while(true) {
-		                String m = "heartbeat<" + c._name + ", " + c._ip + ", " +  c._port + ">" + "\n";
-		                c.sendMessage(m); 
-		                //System.out.println("Message sent to the server : " + m);
-		                Thread.sleep(heartbeat_rate * 1000);
-		            }
-		        } catch (Exception e) {
-		            e.printStackTrace();
-		        }
-			}
-			
-			public Runnable init(ChatClient cc) {
-				this.c = cc;
-				return this;
-			}
-        	
+         ChatClient c;
+         
+   @Override
+   public void run() {
+    try {
+              while(true) {
+                  String m = "heartbeat<" + c._name + ", " + c._ip + ", " +  c._port + ">" + "\n";
+                  c.sendMessage(m); 
+                  //System.out.println("Message sent to the server : " + m);
+                  Thread.sleep(heartbeat_rate * 1000);
+              }
+          } catch (Exception e) {
+              e.printStackTrace();
+          }
+   }
+   
+   public Runnable init(ChatClient cc) {
+    this.c = cc;
+    return this;
+   }
+         
         }.init(this));
     }
      
@@ -173,109 +173,111 @@ class ChatClient implements Runnable{
     
     //chat from here
     @SuppressWarnings("resource")
-	private void Chat(String s) throws IOException {
-    	String [] tok = s.split(" ");
-    	Socket socket = new Socket(tok[1], Integer.parseInt(tok[2]));
-    	BufferedWriter bbw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-    	
-    	//new thread to keep receiving message
-    	this.executor.execute(new Runnable() {
+ private void Chat(String s) throws IOException {
+     String [] tok = s.split(" ");
+     Socket socket = new Socket(tok[1], Integer.parseInt(tok[2]));
+     BufferedWriter bbw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+     
+     //new thread to keep receiving message
+     this.executor.execute(new Runnable() {
 
-    		Socket s;
-    		
-			@Override
-			public void run() {
-				try {
-					BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
-					while(true) {
-						String s = br.readLine();
-						if(s == null) {
-							continue;
-						}
-						if(s.equals("EndSession")) {
-							System.out.println("Chat Closed");
-							System.out.print(">> ");
-							return;
-						}
-						System.out.println(s);
-						System.out.print(">> ");
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			
-			private Runnable init(Socket socket) {
-				this.s = socket;
-				return this;
-			}
-    		
-    	}.init(socket));
-    	
-    	Scanner sc = new Scanner(System.in);
+      Socket s;
+      
+   @Override
+   public void run() {
+    try {
+     BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+     while(true) {
+      String s = br.readLine();
+      if(s == null) {
+       continue;
+      }
+      if(s.equals("EndSession")) {
+       System.out.println("Chat Closed");
+       System.out.print("> ");
+       return;
+      }
+      System.out.println(s);
+      System.out.print("> ");
+     }
+    } catch (IOException e) {
+     e.printStackTrace();
+    }
+   }
+   
+   private Runnable init(Socket socket) {
+    this.s = socket;
+    return this;
+   }
+      
+     }.init(socket));
+     
+     Scanner sc = new Scanner(System.in);
         while(true) {
-        	System.out.print(">> ");
-        	String st = sc.nextLine();
-        	if(st.equals("exit")) {
-        		bbw.write("EndSession\n");
-        		bbw.flush();
-        		return;
-        	}
-        	st = st + "\n";
-        	bbw.write(st);
-        	bbw.flush();
+         System.out.print("> ");
+         String st = sc.nextLine();
+         if(st.equals("exit")) {
+          bbw.write("EndSession\n");
+          bbw.flush();
+          return;
+         }
+         //st = st + "\n";
+         st = this._name+": "+st + "\n";
+         bbw.write(st);
+         bbw.flush();
         }
     }
     
     //start chat session
     @SuppressWarnings("resource")
-	private void AcceptChat() throws IOException {
-    	BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(_client.getOutputStream()));
-    	BufferedReader br = new BufferedReader(new InputStreamReader(_client.getInputStream()));
+ private void AcceptChat() throws IOException {
+     BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(_client.getOutputStream()));
+     BufferedReader br = new BufferedReader(new InputStreamReader(_client.getInputStream()));
         
         //printing incoming message
         this.executor.execute(new Runnable() {
 
-        	BufferedReader br;
-			@Override
-			public void run() {
-				while(true) {
-					try {
-						String s = br.readLine();
-						if(s == null) {
-							continue;
-						}
-						if(s.equals("EndSession")) {
-							System.out.println("Chat Closed");
-							System.out.print(">> ");
-							return;
-						}
-						System.out.println(s);
-						System.out.print(">> ");
-					} catch(Exception e) {
-						e.printStackTrace();
-					}
-				}
-			}
-			
-			private Runnable init(BufferedReader br) {
-				this.br = br;
-				return this;
-			}
-        	
+         BufferedReader br;
+   @Override
+   public void run() {
+    while(true) {
+     try {
+      String s = br.readLine();
+      if(s == null) {
+       continue;
+      }
+      if(s.equals("EndSession")) {
+       System.out.println("Chat Closed");
+       System.out.print("> ");
+       return;
+      }
+      System.out.println(s);
+      System.out.print("> ");
+     } catch(Exception e) {
+      e.printStackTrace();
+     }
+    }
+   }
+   
+   private Runnable init(BufferedReader br) {
+    this.br = br;
+    return this;
+   }
+         
         }.init(br));
         Scanner sc = new Scanner(System.in);
         while(true) {
-	        System.out.print("> ");
-        	String s = sc.nextLine();
-        	if(s.equals("exit")) {
-        		bw.write("EndSession\n");
-        		bw.flush();
-        		return;
-        	}
-        	s = s + "\n";
-        	bw.write(s);
-        	bw.flush();
+         System.out.print("> ");
+         String s = sc.nextLine();
+         if(s.equals("exit")) {
+          bw.write("EndSession\n");
+          bw.flush();
+          return;
+         }
+         //s = s + "\n";
+         s = this._name+": "+s+"\n";
+         bw.write(s);
+         bw.flush();
         }
     }
      
