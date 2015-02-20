@@ -72,7 +72,7 @@ class ChatClient implements Runnable{
          
         m = this.readMessage();
         //System.out.println(m);
-         
+        //System.out.print(m);
         return(m.equals("Success"));
     }
      
