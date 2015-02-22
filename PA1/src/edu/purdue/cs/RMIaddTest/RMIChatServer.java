@@ -6,6 +6,7 @@ public class RMIChatServer {
     try {
       RMIImplementation RMIImplementation = new RMIImplementation();
       Naming.rebind("RMIChatServer", RMIImplementation);
+      System.out.println("Server: The sum is: " + RMIInterface.add(50.0,50.0));
     }
     catch(Exception e) {
       System.out.println("Exception: " + e);
