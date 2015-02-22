@@ -10,8 +10,19 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 
-public class MultithreadedChatServer implements Runnable {
+/*
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.rmi.*;
+*/
+
+public class RMIChatServer implements Runnable {
     
     //Constant Variable
     private static final int PORT = 1222;  //TODO
@@ -27,7 +38,7 @@ public class MultithreadedChatServer implements Runnable {
     BufferedWriter bw;
     private String name;
     
-    public MultithreadedChatServer() {
+    public RMIChatServer() {
         
         this.executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(THREAD_POOL_CAPACITY);
         
@@ -41,7 +52,7 @@ public class MultithreadedChatServer implements Runnable {
         heart_beat = new ConcurrentHashMap<String, Long>();
     }
     
-    public MultithreadedChatServer(Socket client) {
+    public RMIChatServer(Socket client) {
         this._client = client;
         try {
             this.bw = new BufferedWriter(new OutputStreamWriter(this._client.getOutputStream()));
@@ -54,8 +65,8 @@ public class MultithreadedChatServer implements Runnable {
         String [] sa = s.split(",");
         sa[0] = sa[0].substring(1);
         System.out.println(sa[0]);
-        for(int i = 0; i < MultithreadedChatServer.group.size(); i++) {
-            if(MultithreadedChatServer.group.get(i).contains(sa[0])) {
+        for(int i = 0; i < RMIChatServer.group.size(); i++) {
+            if(RMIChatServer.group.get(i).contains(sa[0])) {
                 try {             
                     bw.write("Failed\n");
                     bw.flush();
@@ -65,7 +76,7 @@ public class MultithreadedChatServer implements Runnable {
                 return false;
             }
         }
-        MultithreadedChatServer.group.add(s);
+        RMIChatServer.group.add(s);
         
         try {            
             bw.write("Success\n");
@@ -79,7 +90,7 @@ public class MultithreadedChatServer implements Runnable {
     }
     
     private synchronized static boolean removeFromGroup(String s) {
-        return MultithreadedChatServer.group.remove(s);
+        return RMIChatServer.group.remove(s);
     }
     
     
@@ -125,15 +136,15 @@ public class MultithreadedChatServer implements Runnable {
                     //add to Group
                     this.addToGroup(m);
                     this.name = m;
-                    MultithreadedChatServer.heart_beat.put(m, System.currentTimeMillis());
+                    RMIChatServer.heart_beat.put(m, System.currentTimeMillis());
                 } else if(m.equals("get")) {
                     ObjectOutputStream oos = new ObjectOutputStream(this._client.getOutputStream());
-                    oos.writeObject(MultithreadedChatServer.group);
+                    oos.writeObject(RMIChatServer.group);
                     oos.flush();
                 } else if(m.contains("heartbeat")) {
                  Long l = System.currentTimeMillis();
                  m = m.substring(m.indexOf('<'));
-                    if(MultithreadedChatServer.heart_beat.put(m, l) == null) {
+                    if(RMIChatServer.heart_beat.put(m, l) == null) {
                      System.out.println("updating failed");
                     }
                     System.out.printf("update time to %s\n", l.toString());
@@ -150,7 +161,7 @@ public class MultithreadedChatServer implements Runnable {
         while (true) {
             try {
                 Socket _client = this.serverSocket.accept();
-                MultithreadedChatServer ms = new MultithreadedChatServer(_client);
+                RMIChatServer ms = new RMIChatServer(_client);
                 this.executor.execute(ms);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -160,7 +171,7 @@ public class MultithreadedChatServer implements Runnable {
     
     public static void main(String[] args) {
         System.out.println("Start!");
-        MultithreadedChatServer ms = new MultithreadedChatServer();
+        RMIChatServer ms = new RMIChatServer();
         ms.startServer();
     }
 }

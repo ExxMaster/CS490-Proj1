@@ -27,7 +27,7 @@ class ChatClient implements Runnable{
     //constant variable
     private static final int heartbeat_rate = 5;
     private static final String serverAddress = "localhost";
-    private static final int portNumber = 1222; //TODO
+    private static int portNumber = 1222;
     private static final int THREAD_POOL_CAPACITY = 10;
      
     private ChatClient() {
@@ -297,7 +297,13 @@ class ChatClient implements Runnable{
     }
      
     public static void main(String[] args) throws Exception {
-        ChatClient cc = new ChatClient();
+        if(args.length!=1){
+	    System.out.println("Need port number");
+	    System.exit(1);
+	}
+	portNumber=Integer.parseInt(args[0]);
+
+	ChatClient cc = new ChatClient();
          
         while(true) {
             if(cc.register()) break;

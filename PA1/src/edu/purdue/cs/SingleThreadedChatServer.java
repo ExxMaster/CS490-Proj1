@@ -14,7 +14,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public class SingleThreadedChatServer implements Runnable {
     
     //Constant Variable
-    private static final int PORT = 1222;
+    private static int PORT = 1222;
     private static final int THREAD_POOL_CAPACITY = 10;
     
     private ServerSocket serverSocket;
@@ -175,7 +175,12 @@ public class SingleThreadedChatServer implements Runnable {
     }
     
     public static void main(String[] args) {
-        System.out.println("Start!");
+	if(args.length != 1){
+            System.err.println("need port number");
+            System.exit(1);
+        }
+        int PORT = Integer.parseInt(args[0]);        
+	System.out.println("Start!");
         SingleThreadedChatServer ss = new SingleThreadedChatServer();
         ss.startServer();        
     }
