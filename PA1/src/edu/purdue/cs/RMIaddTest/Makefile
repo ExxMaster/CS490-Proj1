@@ -12,9 +12,12 @@ create:
 
 server:
 	java RMIChatServer
-	
+
 client:
+	java RMIChatClient 127.0.0.1
+
+clientadd:
 	java RMIChatClient 127.0.0.1 55 45
-	
+
 clear:
 	rm *.class
