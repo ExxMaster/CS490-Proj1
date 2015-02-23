@@ -1,5 +1,6 @@
 import java.rmi.*;
 import java.util.*;
+import java.net.InetAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -13,9 +14,15 @@ public class RMIChatClient {
     
     
 	 private RMIChatClient() {
-		 
-		this._ip = "127.0.0.1";//s.getLocalAddress().toString().substring(1);
-		this._port = 33550;//serverSocket.getLocalPort();
+	 	try{
+			this._ip = InetAddress.getLocalHost().getHostAddress();
+			System.out.println(this._ip);
+			//s.getLocalAddress().toString().substring(1);
+		}catch (Exception e) {
+			System.out.println("ip address failure");
+		}
+		this._port = 33550;
+		//serverSocket.getLocalPort();
 		this.executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(THREAD_POOL_CAPACITY);
 	}
 	
@@ -103,7 +110,7 @@ public class RMIChatClient {
       System.out.println("The sum is: " + intf.add(d1, d2));
     */
     cc.sendHeartbeat();
-    System.out.println("done");
+    System.out.println("registered");
     while(true){
     	System.out.print(">");
     	Scanner sc = new Scanner(System.in);
@@ -113,7 +120,7 @@ public class RMIChatClient {
     		String g = intf.getGroup();
     		System.out.println(g);
     	}
-    	if(msg.equals("exit")) break;
+    	if(msg.equals("exit")) System.exit(1);
     }
     }catch(Exception e) {
       System.out.println("Exception: " + e);
